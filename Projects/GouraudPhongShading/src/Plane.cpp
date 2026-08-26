@@ -1,5 +1,3 @@
-
-
 #include "Plane.h"
 
 Plane::Plane() : Object3D(),
@@ -12,8 +10,6 @@ Plane::Plane() : Object3D(),
 					side(0)
 {
 }
-
-
 
 void Plane::createPlane(int side)
 {
@@ -121,7 +117,6 @@ void Plane::createPlane(int side)
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-
 	//crear VBO vertices
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);  //Ojo esto todavia no ha reservado memoria
@@ -132,8 +127,6 @@ void Plane::createPlane(int side)
 	const GLint stride = 8 * sizeof(GLfloat);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0); //geometria
 	glEnableVertexAttribArray(0);
-
-
 }
 
 int Plane::getNumVertex() 
@@ -169,7 +162,6 @@ size_t Plane::getVertexSizeInBytes()
 	return size * sizeof(GLfloat);
 }
 
-
 size_t Plane::getTextureCoordsSizeInBytes()
 {
 	int TS = 2 * 3 * 2;	//2 triangulos de 3 vertices con 2 coords 
@@ -182,4 +174,3 @@ Plane::~Plane()
 {
 	cleanMemory();
 }
-

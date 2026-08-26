@@ -47,6 +47,8 @@ void Application::setup()
 	plane.cleanMemory();
 	geometry["plane"] = plane.vao;
 
+
+
 	// Cargar shaders, compilarlos y ligarlos
 	setupShaders();
 
