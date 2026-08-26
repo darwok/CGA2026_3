@@ -133,8 +133,10 @@
     <ClCompile Include="src\ShaderFuncs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\passthru.frag" />
-    <None Include="shaders\passthru.vert" />
+    <None Include="shaders\GouraudShading.frag" />
+    <None Include="shaders\GouraudShading.vert" />
+    <None Include="shaders\PhongShading.frag" />
+    <None Include="shaders\PhongShading.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Application.h" />
