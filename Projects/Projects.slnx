@@ -5,6 +5,7 @@
   </Configurations>
   <Project Path="ADS/ADS.vcxproj" Id="7212c74b-53cb-40ef-99bd-ac0920e4a10b" />
   <Project Path="GouraudPhongShading/GouraudPhongShading.vcxproj" Id="ecec9420-8844-405d-b4ae-db65321b0880" />
+  <Project Path="HeightMap/HeightMap.vcxproj" Id="20d53ccc-4c9d-4a54-92fd-eda6bc9c505c" />
   <Project Path="HelloApplication/HelloApplication.vcxproj" Id="34308bb7-12c2-4bce-9868-9327976f25b9" />
   <Project Path="HelloGLFW/HelloGLFW.vcxproj" Id="4acbb7ec-e85c-4504-8299-b1ae251236cd" />
   <Project Path="HelloPlane/HelloPlane.vcxproj" Id="b91f511a-51c1-43bc-839a-5b07375d7488" />
