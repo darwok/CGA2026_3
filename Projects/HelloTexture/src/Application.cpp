@@ -46,19 +46,22 @@ void Application::setupShaders()
 	uniforms["modelTrans"] = glGetUniformLocation(programs["passthru"], "modelTrans");
 	uniforms["projection"] = glGetUniformLocation(programs["passthru"], "projection");
 	uniforms["color"] = glGetUniformLocation(programs["passthru"], "color");
+	uniforms["tex0"] = glGetUniformLocation(programs["transforms"], "tex0");
 }
 
 void Application::setup()
 {
 	//Crear Plano
+	setupShaders();
 	plane.createPlane(1);
 	plane.cleanMemory();
 	geometry["plane"] = plane.vao;	//Cargar shaders, compilarlos y ligarlos
-	setupTexture("textures/tex1.jpg");
-	setupShaders();
+	textures["gems"] = setupTexture("textures/tex0.png");
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glPolygonMode(GL_BACK, GL_LINE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
@@ -154,6 +157,11 @@ void Application::draw()
 	//glUniform4f(uniforms["color"], 1.0f, 0.5f, 0.5f, 1.0f);
 	//glDrawArrays(GL_TRIANGLES, 0, plane.getNumVertex());
 	//glDisable(GL_POLYGON_OFFSET_LINE);
+
+	// Select textures
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textures["gems"]);
+	glUniform1i(uniforms["tex0"], 0);
 }
 
 Application::~Application() 

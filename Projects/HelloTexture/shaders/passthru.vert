@@ -11,6 +11,7 @@ uniform mat4 projection;
 out vec2 texCoords;
 
 void main ()
-{  	
+{
+	texCoords = vTexCoords;
 	gl_Position = projection * camera * modelTrans * vPosition;
 }
