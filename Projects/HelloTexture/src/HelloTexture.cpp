@@ -11,6 +11,20 @@ void myFirstCallback(GLFWwindow* window, int key, int scancode, int action, int 
     {
         glfwSetWindowShouldClose(window, 1);
     }
+
+    // Aumentar la visibilidad de tex1
+    if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        app.blendFactor += 0.05f;
+        if (app.blendFactor > 1.0f) app.blendFactor = 1.0f;
+    }
+
+    // Aumentar la visibilidad de tex0
+    if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    {
+        app.blendFactor -= 0.05f;
+        if (app.blendFactor < 0.0f) app.blendFactor = 0.0f;
+    }
 }
 
 int main(void)

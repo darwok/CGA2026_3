@@ -24,6 +24,7 @@ public:
 	glm::mat4 projection;
 
 	double time{ 0.0f };
+	float blendFactor{ 0.5f };
 
 	Plane plane;
 
