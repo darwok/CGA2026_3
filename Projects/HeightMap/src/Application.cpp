@@ -10,166 +10,212 @@
 
 GLuint Application::setupTexture(const std::string& filename)
 {
-	int width, height, channels;
-	unsigned char* img = stbi_load(filename.c_str(), &width, &height, &channels, 4);
-	if (img == nullptr)
-		return -1;
-	GLuint texID = -1;
-	glGenTextures(1, &texID);
-	glBindTexture(GL_TEXTURE_2D, texID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+    int width, height, channels;
+    unsigned char* img = stbi_load(filename.c_str(), &width, &height, &channels, 4);
+    if (img == nullptr)
+        return -1;
+    GLuint texID = -1;
+    glGenTextures(1, &texID);
+    glBindTexture(GL_TEXTURE_2D, texID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
 
-	stbi_image_free(img);
+    stbi_image_free(img);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	//glGenerateMipmap(GL_TEXTURE_2D);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	return texID;
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texID;
 }
 
 void Application::setupShaders()
 {
-	std::string vertexShader = loadTextFile("shaders/HeightMap.vert");
-	std::string fragmentShader = loadTextFile("shaders/HeightMap.frag");
-	programs["HeightMap"] = InitializeProgram(vertexShader, fragmentShader);
+    // 1. Compile Gouraud Program
+    std::string vGouraud = loadTextFile("shaders/GouraudShading.vert");
+    std::string fGouraud = loadTextFile("shaders/GouraudShading.frag");
+    programs["Gouraud"] = InitializeProgram(vGouraud, fGouraud);
 
-	//Obtemenos la localidad de la variable en los shaders y
-	// la guardamos en c++ en nuestro mapa
-	uniforms["time"] = glGetUniformLocation(programs["HeightMap"], "time");
-	uniforms["camera"] = glGetUniformLocation(programs["HeightMap"], "camera");
-	uniforms["modelTrans"] = glGetUniformLocation(programs["HeightMap"], "modelTrans");
-	uniforms["projection"] = glGetUniformLocation(programs["HeightMap"], "projection");
-	uniforms["color"] = glGetUniformLocation(programs["HeightMap"], "color");
-	uniforms["tex0"] = glGetUniformLocation(programs["transforms"], "tex0");
-	uniforms["tex1"] = glGetUniformLocation(programs["transforms"], "tex1");
+    // 2. Compile Phong Program
+    std::string vPhong = loadTextFile("shaders/PhongShading.vert");
+    std::string fPhong = loadTextFile("shaders/PhongShading.frag");
+    programs["Phong"] = InitializeProgram(vPhong, fPhong);
+
+    // Helper lambda to load uniforms dynamically based on program prefix
+    auto loadUniforms = [&](const std::string& prefix, GLuint program) {
+        uniforms[prefix + "time"] = glGetUniformLocation(program, "time");
+        uniforms[prefix + "camera"] = glGetUniformLocation(program, "camera");
+        uniforms[prefix + "modelTrans"] = glGetUniformLocation(program, "modelTrans");
+        uniforms[prefix + "projection"] = glGetUniformLocation(program, "projection");
+        uniforms[prefix + "eyePos"] = glGetUniformLocation(program, "eyePos");
+        uniforms[prefix + "useLighting"] = glGetUniformLocation(program, "useLighting");
+        uniforms[prefix + "solidColor"] = glGetUniformLocation(program, "solidColor");
+
+        uniforms[prefix + "myLight.ambient"] = glGetUniformLocation(program, "myLight.ambient");
+        uniforms[prefix + "myLight.diffuse"] = glGetUniformLocation(program, "myLight.diffuse");
+        uniforms[prefix + "myLight.specular"] = glGetUniformLocation(program, "myLight.specular");
+        uniforms[prefix + "myLight.position"] = glGetUniformLocation(program, "myLight.position");
+
+        uniforms[prefix + "myMaterial.ambient"] = glGetUniformLocation(program, "myMaterial.ambient");
+        uniforms[prefix + "myMaterial.diffuse"] = glGetUniformLocation(program, "myMaterial.diffuse");
+        uniforms[prefix + "myMaterial.specular"] = glGetUniformLocation(program, "myMaterial.specular");
+        uniforms[prefix + "myMaterial.shininess"] = glGetUniformLocation(program, "myMaterial.shininess");
+
+        // Textures
+        uniforms[prefix + "tex0"] = glGetUniformLocation(program, "tex0");
+        uniforms[prefix + "tex1"] = glGetUniformLocation(program, "tex1");
+        };
+
+    loadUniforms("Gouraud_", programs["Gouraud"]);
+    loadUniforms("Phong_", programs["Phong"]);
 }
 
 void Application::setup()
 {
-	//Crear Plano
-	setupShaders();
-	plane.createPlane(1);
-	plane.cleanMemory();
-	geometry["plane"] = plane.vao;	//Cargar shaders, compilarlos y ligarlos
-	textures["gems"] = setupTexture("textures/tex0.png");
-	textures["crystal"] = setupTexture("textures/tex1.png");
+    // Create Plane (100x100 for the requirement)
+    plane.createPlane(100);
+    plane.cleanMemory();
+    geometry["plane"] = plane.vao;
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glPolygonMode(GL_FRONT, GL_FILL);
-	glPolygonMode(GL_BACK, GL_LINE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Load and compile shaders
+    setupShaders();
+
+    // Load textures
+    textures["tex0"] = setupTexture("textures/tex0.jpg");
+    textures["tex1"] = setupTexture("textures/tex1.jpg");
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Setup initial light properties
+    myLight.ambient = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+    myLight.diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    myLight.specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    myLight.position = glm::vec3(0.0f, 2.5f, 0.0f);
+
+    // Setup initial material properties
+    myMaterial.ambient = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+    myMaterial.diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    myMaterial.specular = glm::vec4(0.9f, 0.9f, 1.0f, 1.0f);
+    myMaterial.shininess = 64.0f;
 }
 
 void Application::update(GLFWwindow* window)
 {
-	double currentTime = glfwGetTime();
-	if (lastTime == 0.0)
-	{
-		lastTime = currentTime;
-	}
-	float deltaTime = static_cast<float>(currentTime - lastTime);
-	lastTime = currentTime;
-	time = currentTime * 1000.0; // time in ms for shaders
+    double currentTime = glfwGetTime();
+    if (lastTime == 0.0)
+    {
+        lastTime = currentTime;
+    }
+    float deltaTime = static_cast<float>(currentTime - lastTime);
+    lastTime = currentTime;
+    time = currentTime;
 
-	if (deltaTime > 0.1f) deltaTime = 0.1f;
+    if (deltaTime > 0.1f) deltaTime = 0.1f;
 
-	// Obtener la posición del cursor y el tamaño de la ventana
-	double xpos, ypos;
-	glfwGetCursorPos(window, &xpos, &ypos);
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
 
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
 
-	// Calcular offsets normalizados respecto al centro [-1.0, 1.0]
-	float ndx = 0.0f;
-	float ndy = 0.0f;
-	if (width > 0 && height > 0)
-	{
-		ndx = static_cast<float>((xpos - (width / 2.0)) / (width / 2.0));
-		ndy = static_cast<float>((ypos - (height / 2.0)) / (height / 2.0));
-	}
-	ndx = glm::clamp(ndx, -1.0f, 1.0f);
-	ndy = glm::clamp(ndy, -1.0f, 1.0f);
+    float ndx = 0.0f;
+    float ndy = 0.0f;
+    if (width > 0 && height > 0)
+    {
+        ndx = static_cast<float>((xpos - (width / 2.0)) / (width / 2.0));
+        ndy = static_cast<float>((ypos - (height / 2.0)) / (height / 2.0));
+    }
+    ndx = glm::clamp(ndx, -1.0f, 1.0f);
+    ndy = glm::clamp(ndy, -1.0f, 1.0f);
 
-	// Mapear a ángulos de rotación de vuelo:
-	// - Pitch (cabeceo alrededor de X): cursor abajo -> pitch arriba (rotación positiva)
-	// - Roll (alabeo alrededor de Z): cursor derecha -> roll derecha (rotación negativa)
-	// - Yaw (guiñada alreadedor de Y): cursor derecha -> guiñada derecha (rotación negativa)
-	float targetRoll = -ndx * glm::radians(45.0f);
-	float targetPitch = ndy * glm::radians(30.0f);
-	float targetYaw = -ndx * glm::radians(35.0f);
+    float targetRoll = -ndx * glm::radians(45.0f);
+    float targetPitch = ndy * glm::radians(30.0f);
+    float targetYaw = -ndx * glm::radians(35.0f);
 
-	// Suavizado (inercia)
-	float lerpFactor = 5.0f * deltaTime;
-	if (lerpFactor > 1.0f) lerpFactor = 1.0f;
+    float lerpFactor = 5.0f * deltaTime;
+    if (lerpFactor > 1.0f) lerpFactor = 1.0f;
 
-	currentRoll = glm::mix(currentRoll, targetRoll, lerpFactor);
-	currentPitch = glm::mix(currentPitch, targetPitch, lerpFactor);
-	currentYaw = glm::mix(currentYaw, targetYaw, lerpFactor);
+    currentRoll = glm::mix(currentRoll, targetRoll, lerpFactor);
+    currentPitch = glm::mix(currentPitch, targetPitch, lerpFactor);
+    currentYaw = glm::mix(currentYaw, targetYaw, lerpFactor);
 
-	// Construir matrices
-	modelTrans = glm::mat4(1.0f);
-	modelTrans = glm::rotate(modelTrans, currentYaw, glm::vec3(0.0f, 1.0f, 0.0f));
-	modelTrans = glm::rotate(modelTrans, currentPitch, glm::vec3(1.0f, 0.0f, 0.0f));
-	modelTrans = glm::rotate(modelTrans, currentRoll, glm::vec3(0.0f, 0.0f, 1.0f));
+    modelTrans = glm::mat4(1.0f);
+    modelTrans = glm::rotate(modelTrans, currentYaw, glm::vec3(0.0f, 1.0f, 0.0f));
+    modelTrans = glm::rotate(modelTrans, currentPitch, glm::vec3(1.0f, 0.0f, 0.0f));
+    modelTrans = glm::rotate(modelTrans, currentRoll, glm::vec3(0.0f, 0.0f, 1.0f));
 
-	glm::vec3 eye = glm::vec3(0.0f, 2.5f, 2.5f);
-	glm::vec3 center = glm::vec3(0.0f);
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 eye = glm::vec3(0.0f, 3.5f, 3.5f);
+    glm::vec3 center = glm::vec3(0.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	camera = glm::lookAt(eye, center, up);
+    camera = glm::lookAt(eye, center, up);
+    eyePos = eye;
 
-	float aspect = height > 0 ? (static_cast<float>(width) / static_cast<float>(height)) : 1.0f;
-	projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    float aspect = height > 0 ? (static_cast<float>(width) / static_cast<float>(height)) : 1.0f;
+    projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 }
 
-void Application::draw() 
+void Application::draw()
 {
-	//Seleccionar programa (shaders)
-	glUseProgram(programs["HeightMap"]);
+    std::string prefix = usePhong ? "Phong_" : "Gouraud_";
+    GLuint program = usePhong ? programs["Phong"] : programs["Gouraud"];
 
-	//doy valores a las uniform
-	glUniform1f(uniforms["time"], time);
-	glUniformMatrix4fv(uniforms["camera"], 1, GL_FALSE, glm::value_ptr(camera));
-	glUniformMatrix4fv(uniforms["modelTrans"], 1, GL_FALSE, glm::value_ptr(modelTrans));
-	glUniformMatrix4fv(uniforms["projection"], 1, GL_FALSE, glm::value_ptr(projection));
+    glUseProgram(program);
 
-	//Seleccionar la geometria (el triangulo)
-	glBindVertexArray(geometry["plane"]);
+    glUniform1f(uniforms[prefix + "time"], static_cast<float>(time));
+    glUniformMatrix4fv(uniforms[prefix + "camera"], 1, GL_FALSE, glm::value_ptr(camera));
+    glUniformMatrix4fv(uniforms[prefix + "modelTrans"], 1, GL_FALSE, glm::value_ptr(modelTrans));
+    glUniformMatrix4fv(uniforms[prefix + "projection"], 1, GL_FALSE, glm::value_ptr(projection));
 
-	// 1. Dibujar el plano relleno con color oscuro (azul oscuro)
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glUniform4f(uniforms["color"], 0.8f, 0.2f, 1.0f, 1.0f);
-	glDrawArrays(GL_TRIANGLES, 0, plane.getNumVertex());
+    glUniform4fv(uniforms[prefix + "myLight.ambient"], 1, glm::value_ptr(myLight.ambient));
+    glUniform4fv(uniforms[prefix + "myLight.diffuse"], 1, glm::value_ptr(myLight.diffuse));
+    glUniform4fv(uniforms[prefix + "myLight.specular"], 1, glm::value_ptr(myLight.specular));
+    glUniform3fv(uniforms[prefix + "myLight.position"], 1, glm::value_ptr(myLight.position));
 
-	//// 2. Dibujar la cuadrícula de alambre en color cian brillante con desplazamiento de polígono
-	//glEnable(GL_POLYGON_OFFSET_LINE);
-	//glPolygonOffset(-1.0f, -1.0f);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//glEnable(GL_LINE_SMOOTH);
-	//glLineWidth(1.5f);
-	//glUniform4f(uniforms["color"], 1.0f, 0.5f, 0.5f, 1.0f);
-	//glDrawArrays(GL_TRIANGLES, 0, plane.getNumVertex());
-	//glDisable(GL_POLYGON_OFFSET_LINE);
+    glUniform4fv(uniforms[prefix + "myMaterial.ambient"], 1, glm::value_ptr(myMaterial.ambient));
+    glUniform4fv(uniforms[prefix + "myMaterial.diffuse"], 1, glm::value_ptr(myMaterial.diffuse));
+    glUniform4fv(uniforms[prefix + "myMaterial.specular"], 1, glm::value_ptr(myMaterial.specular));
+    glUniform1f(uniforms[prefix + "myMaterial.shininess"], myMaterial.shininess);
+    glUniform3fv(uniforms[prefix + "eyePos"], 1, glm::value_ptr(eyePos));
 
-	// Select textures 0
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textures["gems"]);
-	glUniform1i(uniforms["tex0"], 0);
+    // Bind textures
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textures["tex0"]);
+    glUniform1i(uniforms[prefix + "tex0"], 0);
 
-	// Select textures 1
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, textures["crystal"]);
-	glUniform1i(uniforms["tex1"], 1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, textures["tex1"]);
+    glUniform1i(uniforms[prefix + "tex1"], 1);
+
+    glBindVertexArray(geometry["plane"]);
+
+    if (drawMode == 0 || drawMode == 2)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glUniform1i(uniforms[prefix + "useLighting"], 1);
+        glDrawArrays(GL_TRIANGLES, 0, plane.getNumVertex());
+    }
+
+    if (drawMode == 1 || drawMode == 2)
+    {
+        glEnable(GL_POLYGON_OFFSET_LINE);
+        glPolygonOffset(-1.0f, -1.0f);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glLineWidth(1.5f);
+        glUniform1i(uniforms[prefix + "useLighting"], 0);
+        glUniform4f(uniforms[prefix + "solidColor"], 0.0f, 0.75f, 1.0f, 1.0f);
+
+        glDrawArrays(GL_TRIANGLES, 0, plane.getNumVertex());
+
+        glDisable(GL_POLYGON_OFFSET_LINE);
+    }
 }
 
-Application::~Application() 
-{}
+Application::~Application()
+{
+}
