@@ -11,6 +11,7 @@ uniform int useLighting;
 uniform vec4 solidColor;
 
 uniform sampler2D tex1; // HeightMap
+uniform sampler2D tex2; // NormalMap
 
 struct Material {
     vec4 ambient;
@@ -61,20 +62,26 @@ void main ()
 {
     texCoords = vTexCoords;
     
-    // Read the HeightMap to calculate luminosity
     vec4 heightTexel = texture(tex1, texCoords);
-    float L = 0.2126 * heightTexel.r + 0.7152 * heightTexel.g + 0.0722 * heightTexel.b;
+    float L_height = 0.2126 * heightTexel.r + 0.7152 * heightTexel.g + 0.0722 * heightTexel.b;
     
     vec4 displacedPos = vPosition;
-    displacedPos.y = L * 0.2; // Escalamos la altura para hacerla visible, ajustando según se necesite porque si se usan valores muy altos causa que se generen picos muy largos
+    displacedPos.y = L_height * 0.2;
     
-    vec3 localNormal = vec3(0.0, 1.0, 0.0);
-
     if (useLighting != 0) 
     {
         vec4 worldPos = modelTrans * displacedPos;
         mat3 normalMatrix = transpose(inverse(mat3(modelTrans)));
-        vec3 N = normalize(normalMatrix * localNormal);
+        
+        // Calculate TBN matrix for Normal Mapping
+        vec3 T = normalize(normalMatrix * vec3(1.0, 0.0, 0.0));
+        vec3 B = normalize(normalMatrix * vec3(0.0, 0.0, 1.0));
+        vec3 N_base = normalize(normalMatrix * vec3(0.0, 1.0, 0.0));
+        mat3 TBN = mat3(T, B, N_base);
+
+        // Fetch and unpack normal from texture [0,1] -> [-1,1]
+        vec3 tangentNormal = texture(tex2, texCoords).rgb * 2.0 - 1.0;
+        vec3 N = normalize(TBN * tangentNormal);
         
         vec3 L_dir = normalize(myLight.position - vec3(worldPos));
         vec3 V_dir = normalize(eyePos - vec3(worldPos));
@@ -84,6 +91,7 @@ void main ()
         vec4 diffuseComponent = Diffuse(myLight, myMaterial, L_dir, N);
         vec4 specularComponent = vec4(0.0);
         
+        // Specular block calculation
         if (dot(N, L_dir) > 0.0) 
         {
             specularComponent = Specular(myLight, myMaterial, R_dir, V_dir);

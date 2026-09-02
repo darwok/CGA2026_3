@@ -40,6 +40,7 @@ public:
     glm::mat4 projection;
 
     double time{ 0.0f };
+    float fov{ 45.0f };
 
     // Struct instances
     Material myMaterial;
@@ -48,7 +49,7 @@ public:
 
     Plane plane;
     bool usePhong{ false };
-    int drawMode{ 2 }; // 0: Fill, 1: Wireframe, 2: Both
+    int drawMode{ 0 }; // 0: Fill, 1: Wireframe, 2: Both
 
     static const int WIDTH{ 1920 };
     static const int HEIGHT{ 1080 };

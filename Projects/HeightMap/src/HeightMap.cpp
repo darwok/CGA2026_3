@@ -30,6 +30,19 @@ void myFirstCallback(GLFWwindow* window, int key, int scancode, int action, int 
     }
 }
 
+// Callback to use mouse scroll to zoom in/out by changing the FOV (Field of View)... hope it works...
+void myScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	// If yoffset is 1.0 or -1.0 then we extract the value and multiply it by a sensitivity factor to adjust the FOV.
+	// This should make the zoom work. I can adjust sensitivity later if needed.
+    app.fov -= static_cast<float>(yoffset) * 3.0f; // 3.0f es la sensibilidad del zoom
+
+	// There has to be a limit between 1.0f and 120.0f degrees for the FOV, otherwise
+	// matrix projection will be messed up and the scene will look weird.
+    if (app.fov < 1.0f) app.fov = 1.0f;
+    if (app.fov > 120.0f) app.fov = 120.0f;
+}
+
 int main(void)
 {
     GLFWwindow* window;
@@ -39,7 +52,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(app.WIDTH, app.HEIGHT, "Gouraud vs Phong Shading", NULL, NULL);
+    window = glfwCreateWindow(app.WIDTH, app.HEIGHT, "Height Map", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -54,6 +67,7 @@ int main(void)
     }
 
     glfwSetKeyCallback(window, myFirstCallback);
+    glfwSetScrollCallback(window, myScrollCallback);
 
     app.setup();
 

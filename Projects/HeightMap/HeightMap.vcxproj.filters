@@ -52,7 +52,7 @@
     <ClCompile Include="src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GouraudPhongShading.cpp">
+    <ClCompile Include="src\HeightMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Plane.cpp">

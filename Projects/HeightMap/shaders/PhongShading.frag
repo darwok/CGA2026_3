@@ -1,14 +1,15 @@
 #version 460 core
 
 in vec3 FragPos;
-in vec3 Normal;
 in vec2 texCoords;
+in mat3 TBN;
 
 uniform vec3 eyePos;
 uniform int useLighting;
 uniform vec4 solidColor;
 
 uniform sampler2D tex0; // Diffuse Texture
+uniform sampler2D tex2; // NormalMap Texture
 
 struct Material {
     vec4 ambient;
@@ -58,7 +59,10 @@ void main()
 {
     if (useLighting != 0) 
     {
-        vec3 N = normalize(Normal);
+        // Fetch normal from normal map and transform to world space
+        vec3 tangentNormal = texture(tex2, texCoords).rgb * 2.0 - 1.0;
+        vec3 N = normalize(TBN * tangentNormal);
+
         vec3 L = normalize(myLight.position - FragPos);
         vec3 V = normalize(eyePos - FragPos);
         vec3 R = reflect(-L, N);
@@ -75,7 +79,6 @@ void main()
         vec4 texColor = texture(tex0, texCoords);
         vec4 result = ambientComponent + diffuseComponent + specularComponent;
         
-        // El color final se combina multiplicándolo con el de la textura
         result = result * texColor;
         result.a = myMaterial.diffuse.a;
         

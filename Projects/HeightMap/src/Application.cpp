@@ -65,6 +65,7 @@ void Application::setupShaders()
         // Textures
         uniforms[prefix + "tex0"] = glGetUniformLocation(program, "tex0");
         uniforms[prefix + "tex1"] = glGetUniformLocation(program, "tex1");
+        uniforms[prefix + "tex2"] = glGetUniformLocation(program, "tex2");
         };
 
     loadUniforms("Gouraud_", programs["Gouraud"]);
@@ -84,6 +85,7 @@ void Application::setup()
     // Load textures
     textures["tex0"] = setupTexture("textures/tex0.jpg");
     textures["tex1"] = setupTexture("textures/tex1.jpg");
+    textures["tex2"] = setupTexture("textures/tex2.jpg");
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -132,9 +134,9 @@ void Application::update(GLFWwindow* window)
     ndx = glm::clamp(ndx, -1.0f, 1.0f);
     ndy = glm::clamp(ndy, -1.0f, 1.0f);
 
-    float targetRoll = -ndx * glm::radians(45.0f);
-    float targetPitch = ndy * glm::radians(30.0f);
-    float targetYaw = -ndx * glm::radians(35.0f);
+    float targetRoll = -ndx * glm::radians(90.0f);
+    float targetPitch = ndy * glm::radians(90.0f);
+    float targetYaw = -ndx * glm::radians(70.0f);
 
     float lerpFactor = 5.0f * deltaTime;
     if (lerpFactor > 1.0f) lerpFactor = 1.0f;
@@ -156,7 +158,7 @@ void Application::update(GLFWwindow* window)
     eyePos = eye;
 
     float aspect = height > 0 ? (static_cast<float>(width) / static_cast<float>(height)) : 1.0f;
-    projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
 }
 
 void Application::draw()
@@ -190,6 +192,10 @@ void Application::draw()
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textures["tex1"]);
     glUniform1i(uniforms[prefix + "tex1"], 1);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, textures["tex2"]);
+    glUniform1i(uniforms[prefix + "tex2"], 2);
 
     glBindVertexArray(geometry["plane"]);
 
