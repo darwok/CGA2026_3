@@ -13,4 +13,5 @@
   <Project Path="HelloTexture/HelloTexture.vcxproj" Id="6cd4e87b-dc81-43b4-81dc-3ce15e868d27" />
   <Project Path="HelloTriangle/HelloTriangle.vcxproj" Id="362a147b-2648-4572-be6f-40f7ceff68b2" />
   <Project Path="HelloWorld/HelloWorld.vcxproj" Id="f4d4e490-38a7-4b4c-aa3a-900076095e86" />
+  <Project Path="SpriteSheet/SpriteSheet.vcxproj" Id="bccf19eb-2fee-4cb2-ad49-e20f52e28766" />
 </Solution>
