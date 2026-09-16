@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{ecec9420-8844-405d-b4ae-db65321b0880}</ProjectGuid>
-    <RootNamespace>GouraudPhongShading</RootNamespace>
+    <ProjectGuid>{9146eba2-6692-4a79-b806-2157360aa14c}</ProjectGuid>
+    <RootNamespace>BumpMapping</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -76,11 +76,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -90,11 +94,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -102,6 +110,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\Libs\glfw\include;include;$(SolutionDir)..\Libs\glad\include;$(SolutionDir)..\Libs\glm</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -110,6 +119,9 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\Libs\glfw\src\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3dll.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -119,6 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)..\Libs\glfw\include;include;$(SolutionDir)..\Libs\glad\include;$(SolutionDir)..\Libs\glm</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -127,13 +140,15 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\Libs\glfw\src\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3dll.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\GouraudPhongShading.cpp" />
-    <ClCompile Include="src\Application.cpp" />
-    <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\Plane.cpp" />
-    <ClCompile Include="src\ShaderFuncs.cpp" />
+    <ClInclude Include="include\Application.h" />
+    <ClInclude Include="include\Object3D.h" />
+    <ClInclude Include="include\Plane.h" />
+    <ClInclude Include="include\ShaderFuncs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\GouraudShading.frag" />
@@ -142,10 +157,11 @@
     <None Include="shaders\PhongShading.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Application.h" />
-    <ClInclude Include="include\Object3D.h" />
-    <ClInclude Include="include\Plane.h" />
-    <ClInclude Include="include\ShaderFuncs.h" />
+    <ClCompile Include="src\Application.cpp" />
+    <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\BumpMapping.cpp" />
+    <ClCompile Include="src\Plane.cpp" />
+    <ClCompile Include="src\ShaderFuncs.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

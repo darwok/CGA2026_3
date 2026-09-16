@@ -1,7 +1,7 @@
-
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include "Application.h"
+#include <iostream>
 
 Application app;
 
@@ -12,18 +12,21 @@ void myFirstCallback(GLFWwindow* window, int key, int scancode, int action, int 
         glfwSetWindowShouldClose(window, 1);
     }
 
-    // Aumentar la visibilidad de tex1
-    if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    // Toggle between Shaders when pressing "S"
+    if (key == GLFW_KEY_S && action == GLFW_PRESS)
     {
-        app.blendFactor += 0.05f;
-        if (app.blendFactor > 1.0f) app.blendFactor = 1.0f;
+        app.usePhong = !app.usePhong;
+        std::cout << "Active Shading: " << (app.usePhong ? "Phong" : "Gouraud") << std::endl;
     }
 
-    // Aumentar la visibilidad de tex0
-    if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
+    // Toggle Draw Mode when pressing "D"
+    if (key == GLFW_KEY_D && action == GLFW_PRESS)
     {
-        app.blendFactor -= 0.05f;
-        if (app.blendFactor < 0.0f) app.blendFactor = 0.0f;
+        app.drawMode = (app.drawMode + 1) % 3;
+        std::cout << "Draw Mode: ";
+        if (app.drawMode == 0) std::cout << "Fill Only\n";
+        else if (app.drawMode == 1) std::cout << "Wireframe Only\n";
+        else std::cout << "Fill & Wireframe\n";
     }
 }
 
@@ -36,7 +39,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1920, 1024, "Hello Texture", NULL, NULL);
+    window = glfwCreateWindow(app.WIDTH, app.HEIGHT, "Bump Mapping", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
