@@ -1,14 +1,16 @@
 #version 460 core
 
 layout (location = 0) in vec4 vPosition;
+layout (location = 1) in vec2 vTexCoords;
 
 uniform mat4 modelTrans;
 uniform mat4 camera;
 uniform mat4 projection;
-uniform float time;
 uniform vec3 eyePos;
 uniform int useLighting;
 uniform vec4 solidColor;
+
+uniform sampler2D tex1; // NormalMap Texture
 
 // Structs for C++ mapping
 struct Material {
@@ -27,8 +29,9 @@ struct Light {
 };
 uniform Light myLight;
 
-// Pass final color to the fragment shader
+// Pass final color and UVs to the fragment shader
 out vec4 vColor;
+out vec2 texCoords;
 
 // ADS Independent Functions
 vec4 Ambient(Light light, Material material) 
@@ -57,43 +60,27 @@ vec4 Specular(Light light, Material material, vec3 R, vec3 V)
     return vec4(0.0);
 }
 
-// Function to compute radial wave height and analytical normal
-void computeWave(vec3 pos, out vec4 animatedPos, out vec3 normal)
-{
-    // Radial wave parameters
-    float amp = 0.15;
-    float k = 15.0;
-    float speed = 5.0;
-    float alpha = 0.8;
-
-    float r = length(pos.xz);
-    r = max(r, 0.0001);
-
-    animatedPos = vec4(pos, 1.0);
-    float phase = k * r - speed * time;
-    float decay = exp(-alpha * r);
-    animatedPos.y = amp * decay * cos(phase);
-
-    // Partial derivatives for the radial analytical normal calculation
-    float dy_dr = -amp * decay * (alpha * cos(phase) + k * sin(phase));
-    float dy_dx = dy_dr * (pos.x / r);
-    float dy_dz = dy_dr * (pos.z / r);
-    normal = normalize(vec3(-dy_dx, 1.0, -dy_dz));
-}
-
 void main ()
 {
-    vec4 animatedPos;
-    vec3 localNormal;
-
-    computeWave(vPosition.xyz, animatedPos, localNormal);
-    gl_Position = projection * camera * modelTrans * animatedPos;
+    texCoords = vTexCoords;
+    gl_Position = projection * camera * modelTrans * vPosition;
 
     if (useLighting != 0) 
     {
-        vec4 worldPos = modelTrans * animatedPos;
+        vec4 worldPos = modelTrans * vPosition;
         mat3 normalMatrix = transpose(inverse(mat3(modelTrans)));
-        vec3 N = normalize(normalMatrix * localNormal);
+
+        // TBN Matrix construction for flat plane
+        vec3 T = normalize(normalMatrix * vec3(1.0, 0.0, 0.0));
+        vec3 B = normalize(normalMatrix * vec3(0.0, 0.0, 1.0));
+        vec3 N_base = normalize(normalMatrix * vec3(0.0, 1.0, 0.0));
+        mat3 TBN = mat3(T, B, N_base);
+        
+        // Fetch and unpack normal from texture [0,1] -> [-1,1]
+        vec3 tangentNormal = texture(tex1, texCoords).rgb * 2.0 - 1.0;
+        
+        // Final normalized vector
+        vec3 N = normalize(TBN * tangentNormal);
         
         vec3 L = normalize(myLight.position - vec3(worldPos));
         vec3 V = normalize(eyePos - vec3(worldPos));

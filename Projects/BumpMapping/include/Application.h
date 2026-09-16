@@ -5,6 +5,7 @@
 #include "Plane.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "stb_image.h" // Texture loader
 
 // Material and Light structs for C++ side
 struct Material {
@@ -32,12 +33,11 @@ public:
     std::map<std::string, GLuint> geometry;
     std::map<std::string, GLuint> programs;
     std::map<std::string, GLuint> uniforms;
+    std::map<std::string, GLuint> textures; // Texture map
 
     glm::mat4 camera;
     glm::mat4 modelTrans;
     glm::mat4 projection;
-
-    double time{ 0.0f };
 
     // Struct instances
     Material myMaterial;
@@ -46,13 +46,14 @@ public:
 
     Plane plane;
     bool usePhong{ false };
-    int drawMode{ 2 }; // 0: Fill, 1: Wireframe, 2: Both
+    int drawMode{ 0 }; // 0: Fill, 1: Wireframe, 2: Both
 
     static const int WIDTH{ 1920 };
     static const int HEIGHT{ 1080 };
 
 private:
     void setupShaders();
+    GLuint setupTexture(const std::string& filename); // Texture setup declaration
 
     double lastTime{ 0.0 };
     float currentRoll{ 0.0f };

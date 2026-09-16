@@ -1,11 +1,15 @@
 #version 460 core
 
 in vec3 FragPos;
-in vec3 Normal;
+in vec2 texCoords;
+in mat3 TBN;
 
 uniform vec3 eyePos;
 uniform int useLighting;
 uniform vec4 solidColor;
+
+uniform sampler2D tex0; // Diffuse Texture
+uniform sampler2D tex1; // NormalMap Texture
 
 // Structs for C++ mapping
 struct Material {
@@ -57,7 +61,13 @@ void main()
 {
     if (useLighting != 0) 
     {
-        vec3 N = normalize(Normal);
+        // 2. Calculate texel color from normalMap
+        vec3 tangentNormal = texture(tex1, texCoords).rgb;
+        
+        // 3. Normalize the color value from [0, 1] to [-1, 1] to use as Normal vector
+        tangentNormal = tangentNormal * 2.0 - 1.0;
+        vec3 N = normalize(TBN * tangentNormal);
+
         vec3 L = normalize(myLight.position - FragPos);
         vec3 V = normalize(eyePos - FragPos);
         vec3 R = reflect(-L, N);
@@ -72,8 +82,14 @@ void main()
             specularComponent = Specular(myLight, myMaterial, R, V);
         }
 
+        // 4. Get texel color from diffuseMap
+        vec4 texColor = texture(tex0, texCoords);
+
+        // 5. Calculate final color with ADS using diffuse color and Normal
         vec4 result = ambientComponent + diffuseComponent + specularComponent;
+        result = result * texColor;
         result.a = myMaterial.diffuse.a;
+        
         fragColor = clamp(result, 0.0, 1.0);
     } 
     else 

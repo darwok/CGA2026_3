@@ -1,3 +1,4 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include "Application.h"
 #include <GLFW/glfw3.h>
 #include <vector>
@@ -5,6 +6,32 @@
 #include <chrono>
 #include <iostream>
 #include "glm/gtc/type_ptr.hpp"
+
+// Function to load and configure textures
+GLuint Application::setupTexture(const std::string& filename)
+{
+    int width, height, channels;
+    unsigned char* img = stbi_load(filename.c_str(), &width, &height, &channels, 4);
+    if (img == nullptr)
+    {
+        std::cout << "Error loading texture: " << filename << std::endl;
+        return -1;
+    }
+    GLuint texID = -1;
+    glGenTextures(1, &texID);
+    glBindTexture(GL_TEXTURE_2D, texID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+
+    stbi_image_free(img);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texID;
+}
 
 void Application::setupShaders()
 {
@@ -20,7 +47,6 @@ void Application::setupShaders()
 
     // Helper lambda to load uniforms dynamically based on program prefix
     auto loadUniforms = [&](const std::string& prefix, GLuint program) {
-        uniforms[prefix + "time"] = glGetUniformLocation(program, "time");
         uniforms[prefix + "camera"] = glGetUniformLocation(program, "camera");
         uniforms[prefix + "modelTrans"] = glGetUniformLocation(program, "modelTrans");
         uniforms[prefix + "projection"] = glGetUniformLocation(program, "projection");
@@ -37,6 +63,10 @@ void Application::setupShaders()
         uniforms[prefix + "myMaterial.diffuse"] = glGetUniformLocation(program, "myMaterial.diffuse");
         uniforms[prefix + "myMaterial.specular"] = glGetUniformLocation(program, "myMaterial.specular");
         uniforms[prefix + "myMaterial.shininess"] = glGetUniformLocation(program, "myMaterial.shininess");
+
+        // Texture Uniforms
+        uniforms[prefix + "tex0"] = glGetUniformLocation(program, "tex0");
+        uniforms[prefix + "tex1"] = glGetUniformLocation(program, "tex1");
         };
 
     // Load uniforms for both Shading techniques
@@ -46,13 +76,17 @@ void Application::setupShaders()
 
 void Application::setup()
 {
-    // Create Plane
-    plane.createPlane(10);
+    // Create Plane (1x1 requested)
+    plane.createPlane(1);
     plane.cleanMemory();
     geometry["plane"] = plane.vao;
 
     // Load and compile shaders
     setupShaders();
+
+    // Load Diffuse (tex0) and Normal Map (tex1)
+    textures["tex0"] = setupTexture("textures/tex0.jpg");
+    textures["tex1"] = setupTexture("textures/tex1.jpg");
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -65,9 +99,9 @@ void Application::setup()
     myLight.specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     myLight.position = glm::vec3(0.0f, 2.5f, 0.0f);
 
-    // Setup initial material properties (Metallic Blue)
-    myMaterial.ambient = glm::vec4(0.1f, 0.12f, 0.22f, 1.0f);
-    myMaterial.diffuse = glm::vec4(0.15f, 0.45f, 0.9f, 1.0f);
+    // Setup initial material properties
+    myMaterial.ambient = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+    myMaterial.diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     myMaterial.specular = glm::vec4(0.9f, 0.9f, 1.0f, 1.0f);
     myMaterial.shininess = 64.0f;
 }
@@ -81,9 +115,6 @@ void Application::update(GLFWwindow* window)
     }
     float deltaTime = static_cast<float>(currentTime - lastTime);
     lastTime = currentTime;
-
-    // Time in seconds for wave animation
-    time = currentTime;
 
     if (deltaTime > 0.1f) deltaTime = 0.1f;
 
@@ -106,9 +137,9 @@ void Application::update(GLFWwindow* window)
     ndy = glm::clamp(ndy, -1.0f, 1.0f);
 
     // Map to rotation angles
-    float targetRoll = -ndx * glm::radians(45.0f);
-    float targetPitch = ndy * glm::radians(30.0f);
-    float targetYaw = -ndx * glm::radians(35.0f);
+    float targetRoll = -ndx * glm::radians(90.0f);
+    float targetPitch = ndy * glm::radians(90.0f);
+    float targetYaw = -ndx * glm::radians(90.0f);
 
     // Interpolation (Inertia)
     float lerpFactor = 5.0f * deltaTime;
@@ -145,8 +176,7 @@ void Application::draw()
 
     glUseProgram(program);
 
-    // Send Transform Matrices & Time
-    glUniform1f(uniforms[prefix + "time"], static_cast<float>(time));
+    // Send Transform Matrices
     glUniformMatrix4fv(uniforms[prefix + "camera"], 1, GL_FALSE, glm::value_ptr(camera));
     glUniformMatrix4fv(uniforms[prefix + "modelTrans"], 1, GL_FALSE, glm::value_ptr(modelTrans));
     glUniformMatrix4fv(uniforms[prefix + "projection"], 1, GL_FALSE, glm::value_ptr(projection));
@@ -163,6 +193,15 @@ void Application::draw()
     glUniform4fv(uniforms[prefix + "myMaterial.specular"], 1, glm::value_ptr(myMaterial.specular));
     glUniform1f(uniforms[prefix + "myMaterial.shininess"], myMaterial.shininess);
     glUniform3fv(uniforms[prefix + "eyePos"], 1, glm::value_ptr(eyePos));
+
+    // Bind Textures to units
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textures["tex0"]);
+    glUniform1i(uniforms[prefix + "tex0"], 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, textures["tex1"]);
+    glUniform1i(uniforms[prefix + "tex1"], 1);
 
     // Select Plane geometry
     glBindVertexArray(geometry["plane"]);

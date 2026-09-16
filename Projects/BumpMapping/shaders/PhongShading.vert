@@ -1,49 +1,27 @@
 #version 460 core
 
 layout (location = 0) in vec4 vPosition;
+layout (location = 1) in vec2 vTexCoords;
 
 uniform mat4 modelTrans;
 uniform mat4 camera;
 uniform mat4 projection;
-uniform float time;
 
 out vec3 FragPos;
-out vec3 Normal;
-
-// Function to compute radial wave height and analytical normal
-void computeWave(vec3 pos, out vec4 animatedPos, out vec3 normal)
-{
-    // Radial wave parameters
-    float amp = 0.15;
-    float k = 15.0;
-    float speed = 5.0;
-    float alpha = 0.8;
-
-    float r = length(pos.xz);
-    r = max(r, 0.0001);
-
-    animatedPos = vec4(pos, 1.0);
-    float phase = k * r - speed * time;
-    float decay = exp(-alpha * r);
-    animatedPos.y = amp * decay * cos(phase);
-
-    // Partial derivatives for the radial analytical normal calculation
-    float dy_dr = -amp * decay * (alpha * cos(phase) + k * sin(phase));
-    float dy_dx = dy_dr * (pos.x / r);
-    float dy_dz = dy_dr * (pos.z / r);
-    normal = normalize(vec3(-dy_dx, 1.0, -dy_dz));
-}
+out vec2 texCoords;
+out mat3 TBN;
 
 void main ()
 {
-    vec4 animatedPos;
-    vec3 localNormal;
+    texCoords = vTexCoords;
+    FragPos = vec3(modelTrans * vPosition);
     
-    computeWave(vPosition.xyz, animatedPos, localNormal);
-
-    FragPos = vec3(modelTrans * animatedPos);
+    // TBN Matrix construction for flat plane
     mat3 normalMatrix = transpose(inverse(mat3(modelTrans)));
-    Normal = normalMatrix * localNormal;
+    vec3 T = normalize(normalMatrix * vec3(1.0, 0.0, 0.0));
+    vec3 B = normalize(normalMatrix * vec3(0.0, 0.0, 1.0));
+    vec3 N_base = normalize(normalMatrix * vec3(0.0, 1.0, 0.0));
+    TBN = mat3(T, B, N_base);
     
-    gl_Position = projection * camera * modelTrans * animatedPos;
+    gl_Position = projection * camera * modelTrans * vPosition;
 }
