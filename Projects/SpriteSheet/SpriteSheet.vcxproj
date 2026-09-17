@@ -149,6 +149,7 @@
     <ClInclude Include="include\Object3D.h" />
     <ClInclude Include="include\Plane.h" />
     <ClInclude Include="include\ShaderFuncs.h" />
+    <ClInclude Include="include\StateMachine.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\passthru.frag" />
@@ -160,6 +161,7 @@
     <ClCompile Include="src\SpriteSheet.cpp" />
     <ClCompile Include="src\Plane.cpp" />
     <ClCompile Include="src\ShaderFuncs.cpp" />
+    <ClCompile Include="src\StateMachine.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
