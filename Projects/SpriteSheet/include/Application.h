@@ -5,7 +5,11 @@
 #include "Plane.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "stb_image.h"
+<<<<<<< Updated upstream
 #include "StateMachine.h"
+=======
+#include "StateMachine.h" // Se añade la clase FSM
+>>>>>>> Stashed changes
 
 class Application
 {
@@ -24,7 +28,12 @@ public:
     glm::mat4 modelTrans;
     glm::mat4 projection;
 
+<<<<<<< Updated upstream
     StateMachine stateMachine;
+=======
+    StateMachine stateMachine; // Instancia de nuestra máquina de estados
+
+>>>>>>> Stashed changes
     Plane plane;
 
 private:
