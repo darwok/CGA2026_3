@@ -5,7 +5,7 @@
 #include "Plane.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "stb_image.h"
-#include "StateMachine.h" // Se añade la clase FSM
+#include "StateMachine.h" // FSM
 
 class Application
 {
@@ -24,9 +24,12 @@ public:
     glm::mat4 modelTrans;
     glm::mat4 projection;
 
-    StateMachine stateMachine;
+    StateMachine stateMachine; // Instancia de nuestra máquina de estados
 
     Plane plane;
+
+    // Método estático para que GLFW pueda comunicarse con la clase C++
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 private:
     void setupShaders();

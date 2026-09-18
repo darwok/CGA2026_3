@@ -4,14 +4,6 @@
 
 Application app;
 
-void myFirstCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, 1);
-    }
-}
-
 int main(void)
 {
     GLFWwindow* window;
@@ -32,7 +24,9 @@ int main(void)
         return -1;
     }
 
-    glfwSetKeyCallback(window, myFirstCallback);
+    glfwSetWindowUserPointer(window, &app);
+
+    glfwSetKeyCallback(window, Application::keyCallback);
 
     app.setup();
 

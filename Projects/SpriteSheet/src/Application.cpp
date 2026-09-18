@@ -58,7 +58,7 @@ void Application::setup()
     geometry["plane"] = plane.vao;
 
     // Cargar el spritesheet (Asegúrate de nombrar tu imagen tex0.png o cambia esto)
-    textures["tex0"] = setupTexture("textures/tex0.png");
+    textures["tex0"] = setupTexture("textures/tex0.jpg");
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -138,6 +138,19 @@ void Application::draw()
     glUniform1i(uniforms["tex0"], 0);
 
     glDrawArrays(GL_TRIANGLES, 0, plane.getNumVertex());
+}
+
+void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+
+    if (app)
+    {
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        {
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+        }
+    }
 }
 
 Application::~Application()

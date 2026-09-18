@@ -25,13 +25,8 @@ void main ()
     {
         x = 1.0 - x;
     }
-
-    // OpenGL mapea el Y=0 en la parte inferior, si tu imagen de spritesheet 
-    // se lee convencionalmente (Fila 0 = hasta arriba), necesitamos invertir la fila.
-    float invertedRow = (totalRows - 1.0) - row;
     
-    // Convertir las coordenadas crudas de (0 a 1) en las coordenadas exactas de recorte del cuadro
-    texCoords = vec2((x + col) / totalCols, (vTexCoords.y + invertedRow) / totalRows);
+    texCoords = vec2((x + col) / totalCols, (vTexCoords.y + row) / totalRows);
 
     gl_Position = projection * camera * modelTrans * vPosition;
 }
