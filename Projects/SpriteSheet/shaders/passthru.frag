@@ -9,7 +9,7 @@ void main()
 {
     vec4 color = texture(tex0, texCoords);
     
-    // Ignorar (recortar) la transparencia alfa
+    // Ignorar (recortar) todos los pixeles que no tienen color en el png (Alpha Transparency)
     if(color.a < 0.1) 
     {
         discard;

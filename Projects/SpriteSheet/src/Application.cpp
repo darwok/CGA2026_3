@@ -10,14 +10,16 @@ GLuint Application::setupTexture(const std::string& filename)
 {
     int width, height, channels;
     unsigned char* img = stbi_load(filename.c_str(), &width, &height, &channels, 4);
-    if (img == nullptr) return -1;
-
+    if (img == nullptr)
+        return -1;
     GLuint texID = -1;
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_2D, texID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+
     stbi_image_free(img);
 
+    // GL_NEAREST mantiene los pixeles nítidos, ideal para Pixel Art / SpriteSheets
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -37,11 +39,13 @@ void Application::setupShaders()
     uniforms["modelTrans"] = glGetUniformLocation(programs["passthru"], "modelTrans");
     uniforms["projection"] = glGetUniformLocation(programs["passthru"], "projection");
 
+    // Spritesheet uniform locations
     uniforms["tex0"] = glGetUniformLocation(programs["passthru"], "tex0");
     uniforms["col"] = glGetUniformLocation(programs["passthru"], "col");
     uniforms["row"] = glGetUniformLocation(programs["passthru"], "row");
     uniforms["totalCols"] = glGetUniformLocation(programs["passthru"], "totalCols");
     uniforms["totalRows"] = glGetUniformLocation(programs["passthru"], "totalRows");
+    uniforms["flipX"] = glGetUniformLocation(programs["passthru"], "flipX");
 }
 
 void Application::setup()
@@ -53,7 +57,8 @@ void Application::setup()
     plane.cleanMemory();
     geometry["plane"] = plane.vao;
 
-    textures["tex0"] = setupTexture("textures/tex0.jpg");
+    // Cargar el spritesheet (Asegúrate de nombrar tu imagen tex0.png o cambia esto)
+    textures["tex0"] = setupTexture("textures/tex0.png");
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -64,12 +69,17 @@ void Application::setup()
 void Application::update(GLFWwindow* window)
 {
     double currentTime = glfwGetTime();
-    if (lastTime == 0.0) lastTime = currentTime;
+    if (lastTime == 0.0)
+    {
+        lastTime = currentTime;
+    }
     float deltaTime = static_cast<float>(currentTime - lastTime);
     lastTime = currentTime;
 
+    // Tope de seguridad para evitar saltos de tiempo masivos
     if (deltaTime > 0.1f) deltaTime = 0.1f;
 
+    // 1. Obtener entradas en tiempo real
     bool w = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
     bool a = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
     bool s = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
@@ -83,13 +93,15 @@ void Application::update(GLFWwindow* window)
 
     bool attack = f || click;
 
+    // 2. Actualizar estado y calcular el cuadro (frame) con el delta de tiempo
     stateMachine.updateStateFromInput(w, s, a, d, attack, space, c, x, v);
     stateMachine.update(deltaTime);
 
-    // Plano levantado para verse frente a la cámara (solución al problema previo)
+    // 3. Matriz de Modelo estática (levantamos el plano 90 grados sobre el eje X)
     modelTrans = glm::mat4(1.0f);
     modelTrans = glm::rotate(modelTrans, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
+    // 4. Cámara estática centrada viendo al plano directamente
     glm::vec3 eye = glm::vec3(0.0f, 0.0f, 2.5f);
     glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -105,18 +117,22 @@ void Application::draw()
 {
     glUseProgram(programs["passthru"]);
 
+    // Matrices
     glUniformMatrix4fv(uniforms["camera"], 1, GL_FALSE, glm::value_ptr(camera));
     glUniformMatrix4fv(uniforms["modelTrans"], 1, GL_FALSE, glm::value_ptr(modelTrans));
     glUniformMatrix4fv(uniforms["projection"], 1, GL_FALSE, glm::value_ptr(projection));
 
+    // Datos Genéricos de la animación (Máquina de estados -> Shader)
     glUniform1f(uniforms["col"], static_cast<float>(stateMachine.getCurrentCol()));
     glUniform1f(uniforms["row"], static_cast<float>(stateMachine.getCurrentRow()));
     glUniform1f(uniforms["totalCols"], stateMachine.totalCols);
     glUniform1f(uniforms["totalRows"], stateMachine.totalRows);
+    glUniform1i(uniforms["flipX"], stateMachine.isFlipped() ? 1 : 0);
 
     glBindVertexArray(geometry["plane"]);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    // Textura
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textures["tex0"]);
     glUniform1i(uniforms["tex0"], 0);

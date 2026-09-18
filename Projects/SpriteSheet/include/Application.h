@@ -5,7 +5,7 @@
 #include "Plane.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "stb_image.h"
-#include "StateMachine.h"
+#include "StateMachine.h" // Se añade la clase FSM
 
 class Application
 {
@@ -25,6 +25,7 @@ public:
     glm::mat4 projection;
 
     StateMachine stateMachine;
+
     Plane plane;
 
 private:

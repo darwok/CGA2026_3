@@ -2,14 +2,14 @@
 #include "Application.h"
 
 Application app;
-//void myFirstCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-//{
-//    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-//    {
-//        glfwSetWindowShouldClose(window, 1);
-//    }
-//       
-//}
+void myFirstCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, 1);
+    }
+       
+}
 
 int main(void)
 {

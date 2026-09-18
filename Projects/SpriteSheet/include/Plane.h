@@ -28,7 +28,7 @@ public:
 
 	size_t size;
 
-	void createPlane(int side = 100);
+	void createPlane(int side = 10);
 	void cleanMemory();
 	int getNumVertex();
 		
